@@ -33,5 +33,5 @@ __version__ = '0.1.4'
 
 from mass_ts._mass_ts import mass, mass2, mass3
 from mass_ts._mass2_batch import mass2_batch
-from _mass2_gpu import mass2_gpu
+from mass_ts._mass2_gpu import mass2_gpu
 from mass_ts._top_k import top_k_motifs, top_k_discords
