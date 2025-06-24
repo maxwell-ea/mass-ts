@@ -15,6 +15,8 @@ range = getattr(__builtins__, 'xrange', range)
 
 from multiprocessing import cpu_count
 
+import warnings
+
 import numpy as np
 
 import mass_ts as mts
@@ -141,17 +143,17 @@ def mass2_batch(ts, query, batch_size, top_matches=3, n_jobs=1):
 
     # set the n_jobs appropriately
     if n_jobs < 1:
-        n_jobs = cpu_count()
+        n_jobs = 1
 
     if n_jobs > cpu_count():
         n_jobs = cpu_count()
 
     n = len(ts)
-    matches = []    
-    
+    matches = []
+
     # generate indices to process over given batch size
     indices = list(range(0, n - batch_size + 1, batch_size))
-    
+
     # determine if we are multiprocessing or not based on cpu_count
     if n_jobs > 1:
         with mtscore.mp_pool()(processes=n_jobs) as pool:
@@ -162,24 +164,24 @@ def mass2_batch(ts, query, batch_size, top_matches=3, n_jobs=1):
     else:
         for values in _batch_job_generator(ts, query, indices, batch_size):
             matches.append(_min_subsequence_distance(values))
-    
+
     # grab the indices and distances
     matches = np.array(matches)
-    
+
     # find the best K number of matches
     # distance is in column 1
     top_indices = np.argpartition(matches[:, 1], top_matches)[0:top_matches]
-    
+
     # ignore the warning when casting the index values back to ints
     # to store all values it had to choose complex types to handle the
     # distances
-    with np.warnings.catch_warnings():
-        np.warnings.filterwarnings(
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
             'ignore',
             r'Casting complex values to real discards the imaginary part'
         )
         best_indices = matches[:, 0][top_indices].astype('int64')
 
     best_dists = matches[:, 1][top_indices]
-    
+
     return (best_indices, best_dists)
